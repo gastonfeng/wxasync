@@ -1,15 +1,15 @@
-from asyncio.events import get_event_loop
 import asyncio
-import wx
+import platform
 import warnings
 from asyncio import CancelledError
-from collections import defaultdict
-import platform
-from asyncio.locks import Event
 from asyncio.coroutines import iscoroutinefunction
-from wx._html import HtmlHelpDialog
-from wx._adv import PropertySheetDialog
+from asyncio.events import get_event_loop
+from asyncio.locks import Event
+from collections import defaultdict
 
+import wx
+from wx._adv import PropertySheetDialog
+from wx._html import HtmlHelpDialog
 
 IS_MAC = platform.system() == "Darwin"
 
@@ -34,7 +34,7 @@ class WxAsyncApp(wx.App):
                 else:
                     while evtloop.Pending():
                         evtloop.Dispatch()
-                await asyncio.sleep(0.005)
+                await asyncio.sleep(0.02)
                 self.ProcessPendingEvents()
                 evtloop.ProcessIdle()
 
@@ -43,7 +43,7 @@ class WxAsyncApp(wx.App):
 
     def AsyncBind(self, event_binder, async_callback, object, source=None, id=wx.ID_ANY, id2=wx.ID_ANY):
         """Bind a coroutine to a wx Event. Note that when wx object is destroyed, any coroutine still running will be cancelled automatically.
-        """ 
+        """
         if not iscoroutinefunction(async_callback):
             raise Exception("async_callback is not a coroutine function")
         # We restrict the object to wx.Windows to be able to cancel the coroutines on EVT_WINDOW_DESTROY, even if wx.Bind works with any wx.EvtHandler
@@ -57,7 +57,7 @@ class WxAsyncApp(wx.App):
 
     def StartCoroutine(self, coroutine, obj):
         """Start and attach a coroutine to a wx object. When object is destroyed, the coroutine will be cancelled automatically.
-        """ 
+        """
         if asyncio.iscoroutinefunction(coroutine):
             coroutine = coroutine()
         if obj not in self.BoundObjects:
@@ -108,9 +108,9 @@ def StartCoroutine(coroutine, obj):
 
 
 async def AsyncShowModal(dlg):
-    loop = asyncio.get_running_loop()    
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, dlg.ShowModal)
-        
+
 
 async def AsyncShow(dlg):
     closed = Event()
@@ -143,7 +143,8 @@ async def AsyncShow(dlg):
 
 
 async def AsyncShowDialog(dlg):
-    if type(dlg) in [HtmlHelpDialog, wx.TextEntryDialog, wx.MultiChoiceDialog, wx.NumberEntryDialog, wx.PrintAbortDialog, 
+    if type(dlg) in [HtmlHelpDialog, wx.TextEntryDialog, wx.MultiChoiceDialog, wx.NumberEntryDialog,
+                     wx.PrintAbortDialog,
                      PropertySheetDialog, wx.RearrangeDialog, wx.SingleChoiceDialog]:
         return await AsyncShow(dlg)
     return await AsyncShowModal(dlg)
