@@ -29,18 +29,17 @@ class WxAsyncApp(wx.App):
         evtloop = wx.GUIEventLoop()
         with wx.EventLoopActivator(evtloop):
             while not self.exiting:
-                try:
-                    if IS_MAC:
-                        # evtloop.Pending() just returns True on MacOs
-                        evtloop.DispatchTimeout(0)
-                    else:
-                        while evtloop.Pending():
-                            evtloop.Dispatch()
-                    await asyncio.sleep(0.02)
-                    self.ProcessPendingEvents()
-                    evtloop.ProcessIdle()
-                except Exception as ex:
-                    print(traceback.format_exc())
+                if IS_MAC:
+                    # evtloop.Pending() just returns True on MacOs
+                    evtloop.DispatchTimeout(0)
+                else:
+                    while evtloop.Pending():
+                        evtloop.Dispatch()
+                        await asyncio.sleep(0)
+                await asyncio.sleep(0.005)
+                self.ProcessPendingEvents()
+                evtloop.ProcessIdle()
+
     def ExitMainLoop(self):
         self.exiting = True
 
